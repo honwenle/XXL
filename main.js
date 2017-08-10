@@ -87,8 +87,8 @@ function randomColor (gem) {
         prev2x = getGem(gem.posX - 2, gem.posY),
         prev1y = getGem(gem.posX, gem.posY - 1),
         prev2y = getGem(gem.posX, gem.posY - 2);
-    var xColor = prev2x && prev1x.frame == prev2x.frame && prev1x.frame,
-        yColor = prev2y && prev1y.frame == prev2y.frame && prev1y.frame;
+    var xColor = prev1x && prev2x && prev1x.frame == prev2x.frame && prev1x.frame,
+        yColor = prev1y && prev2y && prev1y.frame == prev2y.frame && prev1y.frame;
     do {
         gem.frame = game.rnd.integerInRange(0, gem.animations.frameTotal - 1);
     } while (gem.frame === xColor || gem.frame === yColor);
@@ -171,13 +171,12 @@ function checkCanMove (toX, toY) {
 
 function clearGems () {
     for (var i = 0; i < COLS; i++) {
-        var ct = 0;
+        var ct = 1;
         for (var j = 0; j < ROWS; j++) {
             var g = getGem(i, j);
             if (g && !g.alive) {
                 setGem(g, g.posX, -ct);
                 ct++;
-                console.log(g.posX,g.posY)
             }
         }
     }
@@ -196,16 +195,15 @@ function dropGems () {
             }
         }
     }
-    // refill();
+    refill();
 }
 function refill () {
     gems.forEachDead(function (g) {
-        g.reset(g.posX * GEM_SIZE, (g.posY-1) * GEM_SIZE);
+        g.reset(g.posX * GEM_SIZE, g.posY * GEM_SIZE);
         g.review = true;
         randomColor(g);
-        setGem(g, g.posX, -g.posY);
+        setGem(g, g.posX, -g.posY - 1);
         tweenGem(g, g.posX, g.posY);
-        console.log(g.posX,g.posY)
     }, this);
 }
 function tweenGem (gem, nextX, nextY, count) {
