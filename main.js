@@ -6,7 +6,7 @@ var ROWS, COLS;
 var GEM_SIZE = 70,
     MIN_CLEAR = 3;
 var gems;
-var selectGem = null, nextGem = null, afterSwapCanClear = false;
+var selectGem = null, nextGem = null, afterCanClear = false;
 var startXY = {x: 0, y: 0};
 var waitKill_V = [], waitKill_H = [];
 function preload () {
@@ -33,12 +33,6 @@ function touchGem (gem) {
     selectGem = gem;
     startXY.x = gem.posX;
     startXY.y = gem.posY;
-    // killGem(gem);
-    // dropGems();
-    // gem.reset(gem.posX * GEM_SIZE, -GEM_SIZE);
-    // setGem(gem, gem.posX, 0);
-    // tweenGem(gem, gem.posX, gem.posY);
-    // killGem(gem);
 }
 function moveGem (pointer, x, y) {
     if (selectGem && pointer.isDown) {
@@ -68,16 +62,15 @@ function releaseGem () {
     }
     killGem(selectGem);
     killGem(nextGem);
-    if (afterSwapCanClear) {
+    if (afterCanClear) {
         clearGems();
-        dropGems();
     } else {
         tweenGem(selectGem, nextGem.posX, nextGem.posY);
         tweenGem(nextGem, selectGem.posX, selectGem.posY);
         swapGem(selectGem, nextGem);
     }
 
-    afterSwapCanClear = false;
+    afterCanClear = false;
     selectGem = null;
     nextGem = null;
 }
@@ -121,14 +114,14 @@ function killGem (gem) {
         waitKill_H.forEach(function (g) {
             g.kill()
         });
-        afterSwapCanClear = true;
+        afterCanClear = true;
     }
     if (waitKill_V.length + 1 >= MIN_CLEAR) {
         gem.kill();
         waitKill_V.forEach(function (g) {
             g.kill();
         });
-        afterSwapCanClear = true;
+        afterCanClear = true;
     }
     waitKill_V = [];
     waitKill_H = [];
@@ -180,6 +173,7 @@ function clearGems () {
             }
         }
     }
+    dropGems();
 }
 function dropGems () {
     for (var j = 0; j < COLS; j++) {
@@ -191,20 +185,37 @@ function dropGems () {
             } else if (dropCount > 0) {
                 setGem(g, j, i + dropCount);
                 tweenGem(g, g.posX, g.posY);
-                g.review = true;
+                g.needReview = true;
             }
         }
     }
-    refill();
+    game.time.events.add(300, refill);
 }
 function refill () {
     gems.forEachDead(function (g) {
         g.reset(g.posX * GEM_SIZE, g.posY * GEM_SIZE);
-        g.review = true;
+        g.needReview = true;
         randomColor(g);
         setGem(g, g.posX, -g.posY - 1);
         tweenGem(g, g.posX, g.posY);
     }, this);
+    review();
+}
+function review () {
+    afterCanClear = false;
+    for (var i = 0; i < COLS; i++) {
+        for (var j = 0; j < ROWS; j++) {
+            var g = getGem(i, j);
+            if (g.needReview) {
+                killGem(g);
+            }
+        }
+    }
+    if (afterCanClear) {
+        clearGems();
+    } else {
+        afterCanClear = false;
+    }
 }
 function tweenGem (gem, nextX, nextY, count) {
     count = count || 1;
