@@ -3,10 +3,12 @@ var game = new Phaser.Game('95', '95', Phaser.AUTO, '', {
     create: create
 });
 var ROWS, COLS;
-var GEM_SIZE = 70;
+var GEM_SIZE = 70,
+    MIN_CLEAR = 3;
 var gems;
 var selectGem = null, nextGem = null;
 var startXY = {x: 0, y: 0};
+var waitKill_V = [], waitKill_H = [];
 function preload () {
     game.load.spritesheet("GEMS", "timg.png", GEM_SIZE, GEM_SIZE);
 }
@@ -18,7 +20,7 @@ function create () {
     for (var i = 0; i < COLS; i++) {
         for (var j = 0; j < ROWS; j++) {
             var gem = gems.create(i * GEM_SIZE, j * GEM_SIZE, 'GEMS');
-            gem.frame = game.rnd.integerInRange(0, gem.animations.frameTotal - 1);
+            randomColor(gem);
             gem.inputEnabled = true;
             gem.events.onInputDown.add(touchGem, this);
             gem.events.onInputUp.add(releaseGem, this);
@@ -33,6 +35,10 @@ function touchGem (gem) {
     startXY.y = gem.posY;
     // killGem(gem);
     // dropGems();
+    // gem.reset(gem.posX * GEM_SIZE, -GEM_SIZE);
+    // setGem(gem, gem.posX, 0);
+    // tweenGem(gem, gem.posX, gem.posY);
+    clearGem(gem);
 }
 function moveGem (pointer, x, y) {
     if (selectGem && pointer.isDown) {
@@ -56,10 +62,17 @@ function moveGem (pointer, x, y) {
     }
 }
 function releaseGem () {
+    if (nextGem === null) {
+        selectGem = null;
+        return false;
+    }
     selectGem = null;
     nextGem = null;
 }
 
+function randomColor (gem) {
+    gem.frame = game.rnd.integerInRange(0, gem.animations.frameTotal - 1);
+}
 function calcGemId (x, y) {
     return x + y * COLS;
 }
@@ -83,6 +96,46 @@ function swapGem (g1, g2) {
     setGem(g2, tempX, tempY);
 }
 
+function clearGem (gem) {
+    countGemOnWay(gem, 0, -1);
+    countGemOnWay(gem, 0, 1);
+    countGemOnWay(gem, -1, 0);
+    countGemOnWay(gem, 1, 0);
+    if (waitKill_H.length + 1 >= MIN_CLEAR) {
+        gem.kill();
+        waitKill_H.forEach(function (g) {
+            g.kill()
+        });
+    }
+    if (waitKill_V.length + 1 >= MIN_CLEAR) {
+        gem.kill();
+        waitKill_V.forEach(function (g) {
+            g.kill();
+        });
+    }
+    waitKill_V = [];
+    waitKill_H = [];
+}
+function countGemOnWay (gem, x, y) {
+    var count = 0,
+        next = null,
+        nextX = gem.posX + x,
+        nextY = gem.posY + y;
+    while (nextX >= 0 && nextX < COLS && nextY >= 0 && nextY < ROWS) {
+        next = getGem(nextX, nextY)
+        if (next && next.frame == gem.frame) {
+            if (x == 0) {
+                waitKill_V.push(next);
+            } else {
+                waitKill_H.push(next);
+            }
+            nextX += x;
+            nextY += y;
+        } else {
+            break;
+        }
+    }
+}
 function checkCanMove (toX, toY) {
     if (toX < 0 || toX >= COLS || toY < 0 || toY >= ROWS) {
         return false;
@@ -98,6 +151,7 @@ function checkCanMove (toX, toY) {
     }
     return false;
 }
+
 function dropGems () {
     for (var j = 0; j < COLS; j++) {
         var dropCount = 0;
@@ -112,7 +166,6 @@ function dropGems () {
         }
     }
 }
-
 function tweenGem (gem, nextX, nextY, count) {
     count = count || 1;
     return game.add.tween(gem).to({x: nextX  * GEM_SIZE, y: nextY * GEM_SIZE}, 100 * count, Phaser.Easing.Linear.None, true);
