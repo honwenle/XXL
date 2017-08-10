@@ -170,9 +170,22 @@ function checkCanMove (toX, toY) {
 }
 
 function clearGems () {
-    gems.forEachDead(function (g) {
-        // console.log(g.posX,g.posY)
-    }, this);
+    var tempX,ct = 0;
+    for (var i = 0; i < COLS; i++) {
+        for (var j = 0; j < ROWS; j++) {
+            var g = getGem(i, j);
+            if (g && !g.alive) {
+                if (g.posX == tempX) {
+                    ct++;
+                } else {
+                    tempX = g.posX;
+                    ct = 0;
+                }
+                setGem(g, g.posX, -ct);
+                console.log(g.posX,g.posY)
+            }
+        }
+    }
 }
 function dropGems () {
     for (var j = 0; j < COLS; j++) {
@@ -184,9 +197,21 @@ function dropGems () {
             } else if (dropCount > 0) {
                 setGem(g, j, i + dropCount);
                 tweenGem(g, g.posX, g.posY);
+                g.review = true;
             }
         }
     }
+    // refill();
+}
+function refill () {
+    gems.forEachDead(function (g) {
+        g.reset(g.posX * GEM_SIZE, (g.posY-1) * GEM_SIZE);
+        g.review = true;
+        randomColor(g);
+        setGem(g, g.posX, -g.posY);
+        tweenGem(g, g.posX, g.posY);
+        console.log(g.posX,g.posY)
+    }, this);
 }
 function tweenGem (gem, nextX, nextY, count) {
     count = count || 1;
