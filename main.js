@@ -170,18 +170,13 @@ function checkCanMove (toX, toY) {
 }
 
 function clearGems () {
-    var tempX,ct = 0;
     for (var i = 0; i < COLS; i++) {
+        var ct = 0;
         for (var j = 0; j < ROWS; j++) {
             var g = getGem(i, j);
             if (g && !g.alive) {
-                if (g.posX == tempX) {
-                    ct++;
-                } else {
-                    tempX = g.posX;
-                    ct = 0;
-                }
                 setGem(g, g.posX, -ct);
+                ct++;
                 console.log(g.posX,g.posY)
             }
         }
