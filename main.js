@@ -9,6 +9,7 @@ var gems;
 var selectGem = null, nextGem = null, afterCanClear = false;
 var startXY = {x: 0, y: 0};
 var waitKill_V = [], waitKill_H = [];
+var waitMove = false;
 function preload () {
     game.load.spritesheet("GEMS", "timg.png", GEM_SIZE, GEM_SIZE);
 }
@@ -30,6 +31,9 @@ function create () {
     game.input.addMoveCallback(moveGem, this);
 }
 function touchGem (gem) {
+    if (waitMove) {
+        return false;
+    }
     selectGem = gem;
     startXY.x = gem.posX;
     startXY.y = gem.posY;
@@ -63,6 +67,7 @@ function releaseGem () {
     killGem(selectGem);
     killGem(nextGem);
     if (afterCanClear) {
+        waitMove = true;
         clearGems();
     } else {
         tweenGem(selectGem, nextGem.posX, nextGem.posY);
@@ -215,6 +220,7 @@ function review () {
         clearGems();
     } else {
         afterCanClear = false;
+        waitMove = false;
     }
 }
 function tweenGem (gem, nextX, nextY, count) {
