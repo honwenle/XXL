@@ -10,6 +10,7 @@ var selectGem = null, nextGem = null, afterCanClear = false;
 var startXY = {x: 0, y: 0};
 var waitKill_V = [], waitKill_H = [];
 var waitMove = false;
+var ctList = [];
 function preload () {
     game.load.spritesheet("GEMS", "timg.png", GEM_SIZE, GEM_SIZE);
 }
@@ -177,10 +178,12 @@ function clearGems () {
                 ct++;
             }
         }
+        ctList[i] = ct - 1;
     }
     dropGems();
 }
 function dropGems () {
+    var max = 0;
     for (var j = 0; j < COLS; j++) {
         var dropCount = 0;
         for (var i = ROWS - 1; i >= 0; i--) {
@@ -189,22 +192,23 @@ function dropGems () {
                 dropCount++;
             } else if (dropCount > 0) {
                 setGem(g, j, i + dropCount);
-                tweenGem(g, g.posX, g.posY);
+                tweenGem(g, g.posX, g.posY, dropCount);
                 g.needReview = true;
             }
         }
+        max = Math.max(max, dropCount);
     }
-    game.time.events.add(300, refill);
+    game.time.events.add(max * 100, refill);
 }
 function refill () {
     gems.forEachDead(function (g) {
         g.reset(g.posX * GEM_SIZE, g.posY * GEM_SIZE);
         g.needReview = true;
         randomColor(g);
-        setGem(g, g.posX, -g.posY - 1);
-        tweenGem(g, g.posX, g.posY);
+        setGem(g, g.posX, g.posY + ctList[g.posX]);
+        tweenGem(g, g.posX, g.posY, ctList[g.posX]);
     }, this);
-    review();
+    game.time.events.add(Math.max.apply(null, ctList) * 100, review);
 }
 function review () {
     afterCanClear = false;
