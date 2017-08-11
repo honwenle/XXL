@@ -36,6 +36,7 @@ function create () {
     game.input.addMoveCallback(moveGem, this);
     initText();
 }
+// 初始化记分板
 function initText () {
     var style = { font: "bold 32px MicrosoftYaHei", fill: "#fff"};
     TextStep = game.add.text(50, game.world.height - 100, '当前步数：0', style);
@@ -45,6 +46,7 @@ function initText () {
     TextScore.num = 0;
     TextScore.pre = '你的分数：';
 }
+// 更新记分板
 function updateText (t) {
     t.num++;
     t.setText(t.pre + t.num);
@@ -144,7 +146,7 @@ function killGem (gem) {
     if (waitKill_H.length + 1 >= MIN_CLEAR) {
         gem.kill();
         waitKill_H.forEach(function (g) {
-            g.kill()
+            g.kill();
         });
         afterCanClear = true;
     }
