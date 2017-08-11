@@ -1,4 +1,4 @@
-var game = new Phaser.Game('95', '95', Phaser.AUTO, '', {
+var game = new Phaser.Game('100', '100', Phaser.AUTO, '', {
     preload: preload,
     create: create
 });
@@ -11,13 +11,14 @@ var startXY = {x: 0, y: 0};
 var waitKill_V = [], waitKill_H = [];
 var waitMove = false;
 var ctList = [];
+var TextStep, TextScore;
 // 加载资源
 function preload () {
     game.load.spritesheet("GEMS", "timg.png", GEM_SIZE, GEM_SIZE);
 }
 // 初始化场景
 function create () {
-    ROWS = Math.floor(game.world.height / GEM_SIZE);
+    ROWS = Math.floor((game.world.height - 100) / GEM_SIZE);
     COLS = Math.floor(game.world.width / GEM_SIZE);
 
     gems = game.add.group();
@@ -33,6 +34,20 @@ function create () {
     }
     // 监听指针移动事件
     game.input.addMoveCallback(moveGem, this);
+    initText();
+}
+function initText () {
+    var style = { font: "bold 32px MicrosoftYaHei", fill: "#fff"};
+    TextStep = game.add.text(50, game.world.height - 100, '当前步数：0', style);
+    TextScore = game.add.text(50, game.world.height - 50, '你的分数：0', style);
+    TextStep.num = 0;
+    TextStep.pre = '当前步数：';
+    TextScore.num = 0;
+    TextScore.pre = '你的分数：';
+}
+function updateText (t) {
+    t.num++;
+    t.setText(t.pre + t.num);
 }
 // 选中某个方块
 function touchGem (gem) {
@@ -76,6 +91,7 @@ function releaseGem () {
     if (afterCanClear) {
         waitMove = true;
         clearGems();
+        updateText(TextStep);
     } else {
         tweenGem(selectGem, nextGem.posX, nextGem.posY);
         tweenGem(nextGem, selectGem.posX, selectGem.posY);
@@ -188,6 +204,7 @@ function clearGems () {
             if (g && !g.alive) {
                 setGem(g, g.posX, -ct);
                 ct++;
+                updateText(TextScore);
             }
         }
         ctList[i] = ct - 1;
