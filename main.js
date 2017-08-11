@@ -11,9 +11,11 @@ var startXY = {x: 0, y: 0};
 var waitKill_V = [], waitKill_H = [];
 var waitMove = false;
 var ctList = [];
+// 加载资源
 function preload () {
     game.load.spritesheet("GEMS", "timg.png", GEM_SIZE, GEM_SIZE);
 }
+// 初始化场景
 function create () {
     ROWS = Math.floor(game.world.height / GEM_SIZE);
     COLS = Math.floor(game.world.width / GEM_SIZE);
@@ -29,8 +31,10 @@ function create () {
             gem.events.onInputUp.add(releaseGem, this);
         }
     }
+    // 监听指针移动事件
     game.input.addMoveCallback(moveGem, this);
 }
+// 选中某个方块
 function touchGem (gem) {
     if (waitMove) {
         return false;
@@ -39,6 +43,7 @@ function touchGem (gem) {
     startXY.x = gem.posX;
     startXY.y = gem.posY;
 }
+// 指针移动事件
 function moveGem (pointer, x, y) {
     if (selectGem && pointer.isDown) {
         x = Math.floor(x / GEM_SIZE);
@@ -60,6 +65,7 @@ function moveGem (pointer, x, y) {
         }
     }
 }
+// 松开指针
 function releaseGem () {
     if (nextGem === null) {
         selectGem = null;
@@ -80,7 +86,7 @@ function releaseGem () {
     selectGem = null;
     nextGem = null;
 }
-
+// 随机赋予颜色（并排除立即消除的情况）
 function randomColor (gem) {
     var prev1x = getGem(gem.posX - 1, gem.posY),
         prev2x = getGem(gem.posX - 2, gem.posY),
@@ -92,24 +98,28 @@ function randomColor (gem) {
         gem.frame = game.rnd.integerInRange(0, gem.animations.frameTotal - 1);
     } while (gem.frame === xColor || gem.frame === yColor);
 }
+// 根据坐标获得id
 function calcGemId (x, y) {
     return x + y * COLS;
 }
+// 根据坐标获得方块（本质是根据id获得）
 function getGem (x, y) {
     return gems.iterate('id', calcGemId(x, y), Phaser.Group.RETURN_CHILD);
 }
+// 设置方块的id和坐标
 function setGem (gem, x, y) {
     gem.posX = x;
     gem.posY = y;
     gem.id = calcGemId(x, y);
 }
+// 交换两个方块的坐标
 function swapGem (g1, g2) {
     var tempX = g1.posX,
         tempY = g1.posY;
     setGem(g1, g2.posX, g2.posY);
     setGem(g2, tempX, tempY);
 }
-
+// 根据方块 标记该方块十字方向上可消除的所有方块
 function killGem (gem) {
     countGemOnWay(gem, 0, -1);
     countGemOnWay(gem, 0, 1);
@@ -132,6 +142,7 @@ function killGem (gem) {
     waitKill_V = [];
     waitKill_H = [];
 }
+// 统计方块在某个方向上的同类
 function countGemOnWay (gem, x, y) {
     var count = 0,
         next = null,
@@ -152,6 +163,7 @@ function countGemOnWay (gem, x, y) {
         }
     }
 }
+// 检查指针所在位置是否可交换
 function checkCanMove (toX, toY) {
     if (toX < 0 || toX >= COLS || toY < 0 || toY >= ROWS) {
         return false;
@@ -167,7 +179,7 @@ function checkCanMove (toX, toY) {
     }
     return false;
 }
-
+// 将标记的方块全部挪到场景外（上面）
 function clearGems () {
     for (var i = 0; i < COLS; i++) {
         var ct = 1;
@@ -182,6 +194,7 @@ function clearGems () {
     }
     dropGems();
 }
+// 遍历全图将所有已被挪走的位置坠落填充
 function dropGems () {
     var max = 0;
     for (var j = 0; j < COLS; j++) {
@@ -200,6 +213,7 @@ function dropGems () {
     }
     game.time.events.add(max * 100, refill);
 }
+// 把最顶上的空缺用场景外的方块重新填充
 function refill () {
     gems.forEachDead(function (g) {
         g.reset(g.posX * GEM_SIZE, g.posY * GEM_SIZE);
@@ -210,6 +224,7 @@ function refill () {
     }, this);
     game.time.events.add(Math.max.apply(null, ctList) * 100, review);
 }
+// 重新遍历全图 查找标记可消除
 function review () {
     afterCanClear = false;
     for (var i = 0; i < COLS; i++) {
@@ -227,6 +242,7 @@ function review () {
         waitMove = false;
     }
 }
+// 将方块移动到某坐标
 function tweenGem (gem, nextX, nextY, count) {
     count = count || 1;
     return game.add.tween(gem).to({x: nextX  * GEM_SIZE, y: nextY * GEM_SIZE}, 100 * count, Phaser.Easing.Linear.None, true);
